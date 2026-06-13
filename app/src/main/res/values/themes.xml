@@ -1,0 +1,14 @@
+<resources>
+    <style name="Theme.HoldClicker" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/teal</item>
+        <item name="colorPrimaryVariant">@color/tealDark</item>
+        <item name="colorOnPrimary">#06241F</item>
+        <item name="colorSecondary">@color/pink</item>
+        <item name="colorSecondaryVariant">@color/pink</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:textColor">@color/textMain</item>
+    </style>
+</resources>

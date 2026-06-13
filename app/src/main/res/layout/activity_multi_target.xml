@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Multi Target Mode"
+            android:textColor="@color/teal"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Delay between cycles (ms)"
+            android:textColor="@color/textMain"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/etInterval"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:text="500"
+            android:textColor="@color/textMain"
+            android:textColorHint="@color/textDim" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Stop condition"
+            android:textColor="@color/textMain"
+            android:textSize="15sp" />
+
+        <RadioGroup
+            android:id="@+id/rgStop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/rbInfinite"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="Run indefinitely"
+                android:textColor="@color/textMain" />
+
+            <RadioButton
+                android:id="@+id/rbTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stop after amount of time"
+                android:textColor="@color/textMain" />
+
+            <RadioButton
+                android:id="@+id/rbCycles"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stop after number of cycles"
+                android:textColor="@color/textMain" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:id="@+id/timeRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Stop after (seconds)"
+                android:textColor="@color/textMain"
+                android:textSize="15sp" />
+
+            <EditText
+                android:id="@+id/etStopTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="60"
+                android:textColor="@color/textMain"
+                android:textColorHint="@color/textDim" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/cyclesRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Number of cycles"
+                android:textColor="@color/textMain"
+                android:textSize="15sp" />
+
+            <EditText
+                android:id="@+id/etStopCycles"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:text="100"
+                android:textColor="@color/textMain"
+                android:textColorHint="@color/textDim" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Actions (run in order)"
+            android:textColor="@color/teal"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical" />
+
+        <Button
+            android:id="@+id/btnAddAction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/card"
+            android:text="＋ Add action"
+            android:textColor="@color/teal" />
+
+        <Button
+            android:id="@+id/btnLaunch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="@color/teal"
+            android:text="Show overlay"
+            android:textColor="@color/bg" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/card"
+            android:text="Save as configuration"
+            android:textColor="@color/textMain" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">HoldClicker</string>
+    <string name="accessibility_description">HoldClicker uses this Accessibility service to perform the taps, hold presses and swipes that you configure yourself, and to show its floating overlay controls. It only acts when you press Start, and it stops immediately when you press Stop.</string>
+</resources>

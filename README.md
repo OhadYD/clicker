@@ -1,1 +1,115 @@
-# clicker
+# HoldClicker
+
+HoldClicker is an open, user-controlled auto tapper for Android. Every target can be a normal **Tap**, a **Hold** press for a configurable number of milliseconds, or (in multi target mode) a **Swipe**. It uses Android's Accessibility gesture API and a floating overlay control bar, with no hidden behavior: automation only runs while you press Start, a persistent notification is shown the whole time, and Stop halts it immediately.
+
+- **Single Target Mode** — one draggable target, repeated tap or hold at a chosen interval.
+- **Multi Target Mode** — an ordered sequence of taps, holds and swipes with per-action delays.
+- **Configurations** — save, load, duplicate, rename and delete setups locally.
+- **Common Settings** — target size, control bar size, vibration and countdown toggles.
+
+Dark theme with teal/pink accents. Original branding and assets.
+
+---
+
+## 1. Getting the project onto GitHub from your phone
+
+1. Download or copy the `HoldClicker` project folder (or the zip) to your phone.
+2. In a browser, go to [github.com](https://github.com) and sign in (create a free account if needed).
+3. Tap **＋ → New repository**, name it (e.g. `HoldClicker`), keep it private or public, and create it.
+4. Open the repository, tap **Add file → Upload files**.
+   - If you have the zip, extract it first with any file manager (most Android file managers can extract zips).
+   - Upload the **contents** of the `HoldClicker` folder, keeping the folder structure (`app/...`, `.github/...`, `build.gradle`, etc.). The GitHub mobile website lets you upload folders; if yours doesn't, upload the files folder by folder.
+5. Commit the upload.
+
+> Important: the `.github/workflows/build-apk.yml` file must end up at exactly that path in the repository, or the build workflow will not appear.
+
+## 2. Building the APK with GitHub Actions
+
+No laptop or Android Studio needed — GitHub's servers compile the app.
+
+1. In your repository, open the **Actions** tab.
+2. The **Build debug APK** workflow runs automatically on every push. You can also tap the workflow and choose **Run workflow** to start it manually.
+3. Wait for the run to finish (usually a few minutes; the first run is slowest).
+4. Open the finished run and scroll to **Artifacts**. Download **HoldClicker-debug-apk**.
+5. The artifact downloads as a **zip file** — extract it to get `app-debug.apk`.
+
+## 3. Installing the APK
+
+1. Open the extracted `app-debug.apk` with your file manager.
+2. Android will ask you to allow installs from that app ("Install unknown apps") — allow it for your file manager or browser.
+3. Confirm the install. Because it's a debug build, Play Protect may show a warning; choose "Install anyway".
+
+## 4. Enabling the Accessibility permission
+
+HoldClicker dispatches taps, holds and swipes through Android's accessibility gesture system, so the service must be enabled once:
+
+1. Open **Settings → Accessibility**.
+2. Find **HoldClicker** (sometimes under "Installed apps" or "Downloaded services").
+3. Toggle it **on** and confirm.
+
+The app's home screen shows whether the service is enabled and has a shortcut button to these settings. The service is only used to perform the gestures you configure — it does not read screen content (`canRetrieveWindowContent` is off).
+
+## 5. Using Single Target Mode
+
+1. Open **Single Target Mode** from the home screen.
+2. Set the **click interval** in milliseconds (e.g. 300).
+3. Choose the action type: **Tap** or **Hold**. For Hold, set the **hold duration** in ms.
+4. Pick a stop condition: run indefinitely, stop after a number of seconds, or stop after a number of cycles.
+5. Tap **Show overlay**. The app goes to the home screen and a floating control bar plus one numbered target circle appear.
+6. Drag the circle onto the spot you want pressed, open the app you want to automate, then tap **▶** on the bar.
+7. After a 1-second safety delay (plus a 3-second countdown if enabled in settings), the automation runs. Tap **⏹** to stop instantly, or **✕** to close the overlay.
+
+## 6. Using Multi Target Mode
+
+1. Open **Multi Target Mode**.
+2. Set the **delay between cycles** and a stop condition.
+3. Edit the action list. Each action has:
+   - **Type**: Tap, Hold or Swipe (dropdown)
+   - **Hold (ms)** for Hold actions
+   - **Swipe (ms)** for Swipe actions
+   - **Delay before / after** the action in ms
+   - Use **↑ / ↓** to reorder and **✕** to delete; **＋ Add action** appends one.
+4. Tap **Show overlay**. Numbered circles appear for every action; swipe actions also show a pink end point connected by a dashed line.
+5. Drag every circle (and swipe end point) into place, then press **▶**. Actions run strictly in order — each gesture finishes before the next starts — then the cycle repeats per your stop condition.
+6. The overlay **＋ / －** buttons add or remove targets on the fly (added targets default to Tap with a 200 ms after-delay). Note: targets added from the overlay live only in that overlay session; save changes from the Multi Target screen if you want to keep them.
+
+## 7. Adding Hold actions
+
+- **Single mode:** choose **Hold** as the action type and enter the duration, e.g. interval 300 ms with hold 800 ms. Since the hold is longer than the interval, the runner simply waits for each hold to finish before starting the next one (the screen tells you this).
+- **Multi mode:** set an action's type dropdown to **Hold** and fill in **Hold (ms)**.
+- Hold targets show a small **H** marker on the overlay circle.
+
+## 8. Managing configurations
+
+Open **Manage Configurations** to Load, Rename, Duplicate or Delete saved setups. Four examples are pre-seeded: `Config 0`, `Config 1`, `Hold test` and `Multi target test`. Save new ones from the Single/Multi screens with **Save as configuration**. Configs are stored locally in the app's private storage (SharedPreferences as JSON).
+
+## 9. Safety notes
+
+- Intervals below **40 ms** trigger a warning — extremely fast tapping can overload apps and your device.
+- Negative durations are rejected by input validation.
+- A **1-second safety delay** always precedes a start, with an optional 3-second countdown.
+- A **persistent notification** is shown the entire time automation is running.
+- **⏹ stops immediately**, including mid-sequence.
+- HoldClicker is a plain, visible automation tool. It has no stealth or anti-detection features, and using automation may violate the terms of service of some apps and games — use it responsibly and at your own risk.
+
+## Project structure
+
+```
+HoldClicker/
+├── .github/workflows/build-apk.yml      # GitHub Actions: builds debug APK artifact
+├── build.gradle / settings.gradle       # Gradle project setup (AGP 8.5.2, Kotlin 1.9.24)
+├── app/
+│   ├── build.gradle
+│   └── src/main/
+│       ├── AndroidManifest.xml
+│       ├── res/                         # layouts, drawables, theme, accessibility config
+│       └── java/com/holdclicker/app/
+│           ├── model/Models.kt          # ClickerConfig / TargetAction
+│           ├── data/ConfigStore.kt      # save/load configs (SharedPreferences JSON)
+│           ├── data/Prefs.kt            # common settings
+│           ├── service/AutoClickService.kt   # AccessibilityService + gesture dispatch
+│           ├── service/AutomationRunner.kt   # sequential scheduling engine
+│           ├── overlay/                 # control bar, target circles, swipe lines
+│           └── ui/                      # home, single, multi, configs, settings screens
+└── README.md
+```
