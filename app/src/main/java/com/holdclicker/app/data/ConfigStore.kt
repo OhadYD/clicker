@@ -3,6 +3,7 @@ package com.holdclicker.app.data
 import android.content.Context
 import com.holdclicker.app.model.ActionType
 import com.holdclicker.app.model.ClickerConfig
+import com.holdclicker.app.model.Lane
 import com.holdclicker.app.model.Mode
 import com.holdclicker.app.model.StopMode
 import com.holdclicker.app.model.TargetAction
@@ -103,6 +104,24 @@ object ConfigStore {
                     x = 300f, y = 1100f, type = ActionType.SWIPE,
                     endX = 700f, endY = 1100f, swipeMs = 400L, delayAfterMs = 200L
                 )
+            )
+        ))
+
+        // Parallel branches demo: hold one spot while tapping another.
+        save(ctx, ClickerConfig(
+            name = "Parallel hold + tap",
+            mode = Mode.MULTI,
+            intervalMs = 0L,
+            stopMode = StopMode.INFINITE,
+            lanes = mutableListOf(
+                Lane(mutableListOf(
+                    TargetAction(x = 250f, y = 1000f, type = ActionType.HOLD, holdMs = 1500L)
+                )),
+                Lane(mutableListOf(
+                    TargetAction(x = 850f, y = 900f, type = ActionType.TAP, delayAfterMs = 300L),
+                    TargetAction(x = 850f, y = 900f, type = ActionType.TAP, delayAfterMs = 300L),
+                    TargetAction(x = 850f, y = 900f, type = ActionType.TAP, delayAfterMs = 300L)
+                ))
             )
         ))
 

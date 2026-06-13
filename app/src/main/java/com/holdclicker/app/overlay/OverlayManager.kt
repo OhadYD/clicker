@@ -80,10 +80,15 @@ class OverlayManager(private val service: AutoClickService) {
     private fun addLineOverlay() {
         val v = LineOverlayView(service)
         v.provider = {
-            config?.actions
-                ?.filter { it.type == ActionType.SWIPE }
-                ?.map { PointF(it.x, it.y) to PointF(it.endX, it.endY) }
-                ?: emptyList()
+            val pairs = mutableListOf<Pair<PointF, PointF>>()
+            config?.lanes?.forEach { lane ->
+                lane.actions.forEach { a ->
+                    if (a.type == ActionType.SWIPE) {
+                        pairs.add(PointF(a.x, a.y) to PointF(a.endX, a.endY))
+                    }
+                }
+            }
+            pairs
         }
         val lp = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -182,28 +187,50 @@ class OverlayManager(private val service: AutoClickService) {
         removeAllTargets()
         val cfg = config ?: return
         val sizePx = (Prefs.targetSizeDp(service) * service.resources.displayMetrics.density).roundToInt()
-        cfg.actions.forEachIndexed { index, action ->
-            addTargetWindow(action, index, sizePx, isEnd = false)
-            if (action.type == ActionType.SWIPE) {
-                addTargetWindow(action, index, sizePx, isEnd = true)
+        cfg.lanes.forEachIndexed { laneIndex, lane ->
+            val color = laneColor(laneIndex)
+            val laneLabel = laneLetter(laneIndex)
+            lane.actions.forEachIndexed { index, action ->
+                val label = "$laneLabel${index + 1}"
+                addTargetWindow(action, label, color, sizePx, isEnd = false)
+                if (action.type == ActionType.SWIPE) {
+                    addTargetWindow(action, label, color, sizePx, isEnd = true)
+                }
             }
         }
         lineView?.invalidate()
     }
 
-    private fun addTargetWindow(a: TargetAction, index: Int, sizePx: Int, isEnd: Boolean) {
-        val cfg = config
+    private fun laneColor(i: Int): Int {
+        val palette = intArrayOf(
+            0xFF03DAC5.toInt(), // teal
+            0xFFFFB300.toInt(), // amber
+            0xFF7C4DFF.toInt(), // purple
+            0xFF40C4FF.toInt(), // light blue
+            0xFFFF4081.toInt(), // pink
+            0xFF69F0AE.toInt()  // green
+        )
+        return palette[i % palette.size]
+    }
+
+    private fun laneLetter(i: Int): String =
+        if (i < 26) ('A' + i).toString() else "L${i + 1}"
+
+    private fun addTargetWindow(
+        a: TargetAction,
+        label: String,
+        color: Int,
+        sizePx: Int,
+        isEnd: Boolean
+    ) {
         val v = TargetView(service)
-        v.label = (index + 1).toString()
+        v.label = label
         v.isEndPoint = isEnd
+        v.baseColor = color
         v.marker = when {
             isEnd -> "›"
             a.type == ActionType.HOLD -> "H"
             else -> null
-        }
-        if (!isEnd && cfg != null) {
-            val prevLinks = index > 0 && cfg.actions[index - 1].simultaneousWithNext
-            v.linked = a.simultaneousWithNext || prevLinks
         }
         val lp = WindowManager.LayoutParams(
             sizePx, sizePx, overlayType(), currentTargetFlags(), PixelFormat.TRANSLUCENT

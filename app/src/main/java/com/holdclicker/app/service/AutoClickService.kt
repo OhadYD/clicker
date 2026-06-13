@@ -131,17 +131,27 @@ class AutoClickService : AccessibilityService() {
         overlay?.setRunning(false)
     }
 
+    /** A single stroke placed at [startMs] within a cycle, lasting [durationMs]. */
+    data class TimedStroke(
+        val sx: Float,
+        val sy: Float,
+        val ex: Float,
+        val ey: Float,
+        val swipe: Boolean,
+        val startMs: Long,
+        val durationMs: Long
+    )
+
     /**
-     * Dispatches several actions at the same time as one multi-stroke
-     * gesture (e.g. two holds at once). [onDone] fires when the whole
-     * gesture finishes. Android allows up to GestureDescription
-     * .getMaxStrokeCount() simultaneous strokes; extras are ignored.
+     * Dispatches one cycle of every lane as a single multi-stroke gesture.
+     * Each stroke keeps its own start offset and duration, so independent
+     * branches (e.g. a long hold on one side while taps happen on the other)
+     * run in parallel. Android caps a gesture at getMaxStrokeCount() strokes
+     * and 60s; extra strokes are dropped and durations are clamped.
      */
-    fun dispatchGroup(actions: List<TargetAction>, durations: List<Long>, onDone: () -> Unit) {
-        if (actions.size <= 1) {
-            val a = actions.firstOrNull()
-            if (a == null) { onDone(); return }
-            dispatchAction(a, durations.firstOrNull() ?: 50L, onDone)
+    fun dispatchTimeline(strokes: List<TimedStroke>, cycleLenMs: Long, onDone: () -> Unit) {
+        if (strokes.isEmpty()) {
+            onDone()
             return
         }
         val maxStrokes = try {
@@ -150,20 +160,29 @@ class AutoClickService : AccessibilityService() {
             10
         }
         val builder = GestureDescription.Builder()
-        var longest = 1L
-        val count = minOf(actions.size, maxStrokes)
-        for (i in 0 until count) {
-            val a = actions[i]
+        var added = 0
+        for (s in strokes) {
+            if (added >= maxStrokes) break
             val path = Path()
-            path.moveTo(a.x.coerceAtLeast(1f), a.y.coerceAtLeast(1f))
-            if (a.type == ActionType.SWIPE) {
-                path.lineTo(a.endX.coerceAtLeast(1f), a.endY.coerceAtLeast(1f))
+            path.moveTo(s.sx.coerceAtLeast(1f), s.sy.coerceAtLeast(1f))
+            if (s.swipe) {
+                path.lineTo(s.ex.coerceAtLeast(1f), s.ey.coerceAtLeast(1f))
             }
-            val duration = durations[i].coerceIn(1L, 59_000L)
-            if (duration > longest) longest = duration
-            builder.addStroke(GestureDescription.StrokeDescription(path, 0L, duration))
+            val start = s.startMs.coerceIn(0L, 59_000L)
+            val dur = s.durationMs.coerceIn(1L, 60_000L - start)
+            builder.addStroke(GestureDescription.StrokeDescription(path, start, dur))
+            added++
         }
-        val gesture = builder.build()
+        if (added == 0) {
+            handler.postDelayed(onDone, 50L)
+            return
+        }
+        val gesture = try {
+            builder.build()
+        } catch (e: Exception) {
+            handler.postDelayed(onDone, cycleLenMs + 50L)
+            return
+        }
         val dispatched = try {
             dispatchGesture(gesture, object : GestureResultCallback() {
                 override fun onCompleted(g: GestureDescription?) = onDone()
@@ -173,7 +192,7 @@ class AutoClickService : AccessibilityService() {
             false
         }
         if (!dispatched) {
-            handler.postDelayed(onDone, longest + 50L)
+            handler.postDelayed(onDone, cycleLenMs + 50L)
         }
     }
 

@@ -3,7 +3,7 @@
 HoldClicker is an open, user-controlled auto tapper for Android. Every target can be a normal **Tap**, a **Hold** press for a configurable number of milliseconds, or (in multi target mode) a **Swipe**. It uses Android's Accessibility gesture API and a floating overlay control bar, with no hidden behavior: automation only runs while you press Start, a persistent notification is shown the whole time, and Stop halts it immediately.
 
 - **Single Target Mode** — one draggable target, repeated tap or hold at a chosen interval.
-- **Multi Target Mode** — an ordered sequence of taps, holds and swipes with per-action delays, including **simultaneous (multi-touch) actions** such as two holds at once.
+- **Multi Target Mode** — independent **parallel branches** of taps, holds and swipes — e.g. hold one spot while another branch taps a sequence.
 - **Record Actions** — count down, then capture the taps, holds, swipes and multi-touch you perform into an editable sequence.
 - **Configurations** — save, load, duplicate, rename and delete setups locally.
 - **Common Settings** — target size, control bar size, vibration, countdown, **light/dark mode and accent themes**.
@@ -80,13 +80,19 @@ The app's home screen shows whether the service is enabled and has a shortcut bu
 - **Multi mode:** set an action's type dropdown to **Hold** and fill in **Hold (ms)**.
 - Hold targets show a small **H** marker on the overlay circle.
 
-## 7a. Simultaneous (multi-touch) actions — e.g. two holds at once
+## 7a. Parallel branches (independent simultaneous action paths)
 
-Some actions only happen when two spots are pressed at the same time. In **Multi Target Mode**, every action row has a **⛓ Run together with next action** switch. Turn it on to fire that action at the same instant as the one below it. Chain several in a row to press three or more points together (Android allows up to ten simultaneous strokes).
+Multi Target Mode is built around **branches** that run **in parallel**. Each branch is its own independent timeline of taps, holds and swipes, and every branch starts together at the top of each cycle. This is what lets you, for example, **hold a spot on one side of the screen while a separate branch taps a sequence on the other side** — the two run on their own schedules at the same time.
 
-- Example: to hold two buttons at once, add two **Hold** actions, place their circles on the two spots, and switch **⛓ Run together with next action** on for the first one.
-- On the overlay, targets that fire together show a small **⛓** chain mark.
-- The group runs for as long as its longest member (so two holds of different lengths both stay down until the longer one finishes), then the sequence continues.
+- Use **＋ Add parallel branch** to create another independent path, and **＋ Add action to this branch** to extend one.
+- A live **branch diagram** at the top shows Start fanning out into each branch, the order of actions within a branch (down-arrows), and that the whole thing repeats each cycle.
+- On the overlay, each branch's targets are drawn in its own colour and labelled by branch letter and step (A1, A2, B1 …).
+- The pre-seeded **"Parallel hold + tap"** config is a ready example: branch A holds one point while branch B taps another three times.
+
+**How it runs and its limits.** On stock Android (no root), the only reliable way to press two places at the same time is to send them as one gesture with multiple strokes at different start times — Android cancels a gesture if a second one is dispatched mid-way, so independent OS-level "threads" aren't possible. HoldClicker therefore compiles every branch into a single timed gesture per cycle. Consequences to know:
+
+- A cycle can contain **at most ~10 actions total across all branches** (Android's stroke limit) and must fit within **60 seconds**.
+- A branch that should stay **continuously** held while another branch taps many times will briefly re-press at each cycle boundary, because each cycle is one gesture. Keep the hold to roughly one cycle's length and set the cycle delay to 0 for the smoothest result.
 
 ## 7b. Recording a sequence
 
@@ -94,9 +100,9 @@ The **⏺ Record Actions** card captures exactly what you do:
 
 1. Tap **⏺ Record Actions** on the home screen (the accessibility service must be enabled).
 2. A **3-second countdown** appears, then a translucent capture layer covers the screen.
-3. Perform your taps, holds and swipes — **including two or more fingers at once**. Each press is captured with its real position and timing; quick presses become taps, longer ones become holds, dragged ones become swipes, and presses that overlap in time become a simultaneous group.
+3. Perform your taps, holds and swipes — **including two or more fingers at once**. Each press is captured with its real position and timing; quick presses become taps, longer ones become holds, dragged ones become swipes.
 4. Tap **■ Stop** on the small bar at the top.
-5. HoldClicker builds the sequence, saves it as **"Recorded sequence"**, and opens it in Multi Target Mode so you can fine-tune and save it under your own name.
+5. HoldClicker turns it into **parallel branches** — touches that overlapped in time are placed on separate branches (so a finger you held while tapping with another finger becomes its own branch) — saves it as **"Recorded sequence"**, and opens it in Multi Target Mode to fine-tune and rename.
 
 **Important about how recording works:** Android does not let an app silently watch your touches inside other apps (that capability is what malware abuses, and it's blocked without root). So recording happens *on the capture layer* — while you record, your touches land on that layer rather than the app underneath. You're laying out the sequence and its timing on screen, then HoldClicker plays it back into the real app afterward. Positions and timing are captured faithfully, which is what playback needs.
 
@@ -106,7 +112,7 @@ Open **Common Settings → Appearance** to choose **System**, **Light**, or **Da
 
 ## 9. Managing configurations
 
-Open **Manage Configurations** to Load, Rename, Duplicate or Delete saved setups. Four examples are pre-seeded: `Config 0`, `Config 1`, `Hold test` and `Multi target test`. Save new ones from the Single/Multi screens with **Save as configuration**. Configs are stored locally in the app's private storage (SharedPreferences as JSON).
+Open **Manage Configurations** to Load, Rename, Duplicate or Delete saved setups. Examples are pre-seeded, including `Hold test`, `Multi target test` and `Parallel hold + tap` (a ready parallel-branch demo). Save new ones from the Single/Multi screens with **Save as configuration**. Configs are stored locally in the app's private storage (SharedPreferences as JSON).
 
 ## 10. Safety notes
 
@@ -134,7 +140,7 @@ HoldClicker/
 │           ├── data/Prefs.kt            # common settings
 │           ├── service/AutoClickService.kt   # AccessibilityService + gesture dispatch
 │           ├── service/AutomationRunner.kt   # sequential scheduling engine
-│           ├── overlay/                 # control bar, targets, swipe lines, recorder
+│           ├── overlay/                 # control bar, targets, lines, recorder, branch tree
 │           ├── App.kt                   # applies saved light/dark mode
 │           └── ui/                      # home, single, multi, configs, settings, themed base
 └── README.md

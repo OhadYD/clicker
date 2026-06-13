@@ -154,13 +154,4 @@
             android:textColor="@color/textMain"
             android:textSize="14sp" />
     </LinearLayout>
-
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/swTogether"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="⛓ Run together with next action"
-        android:textColor="@color/textDim"
-        android:textSize="13sp" />
 </LinearLayout>

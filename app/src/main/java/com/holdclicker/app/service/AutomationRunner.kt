@@ -7,19 +7,24 @@ import com.holdclicker.app.model.ActionType
 import com.holdclicker.app.model.ClickerConfig
 import com.holdclicker.app.model.Mode
 import com.holdclicker.app.model.StopMode
+import com.holdclicker.app.model.TargetAction
 import kotlin.math.max
 
 /**
- * Runs a configuration: executes actions strictly in order, waiting for
- * each gesture to finish before starting the next, and repeats according
- * to the stop condition.
+ * Runs a configuration. Every lane is an independent parallel branch with
+ * its own timeline; all lanes start together at the beginning of each cycle.
  *
- * Timing model:
- *  - Single mode: effective period per repeat = max(intervalMs, gesture duration).
- *    If a hold is longer than the interval, the runner simply waits for the
- *    hold to finish before pressing again.
- *  - Multi mode: per-action delayBefore/delayAfter are honored, and
- *    intervalMs is the pause between full cycles.
+ * Because Android cancels an in-progress gesture when a new one is
+ * dispatched, true concurrency (e.g. holding one spot while tapping another)
+ * is achieved by compiling every lane's actions into a single multi-stroke
+ * gesture per cycle, each stroke placed at its own start offset. Android
+ * limits one gesture to getMaxStrokeCount() strokes and 60s, so one cycle
+ * may contain at most that many actions in total.
+ *
+ * Timing:
+ *  - Single mode: period per repeat = max(intervalMs, gesture duration).
+ *  - Multi/parallel mode: per-action delayBefore/delayAfter shape each lane's
+ *    timeline; intervalMs is the pause between full cycles.
  */
 class AutomationRunner(
     private val service: AutoClickService,
@@ -42,11 +47,10 @@ class AutomationRunner(
             if (config.stopMode == StopMode.TIME) {
                 handler.postDelayed({ stop() }, max(0L, config.stopTimeMs))
             }
-            runAction(0)
+            runCycle()
         }, max(0L, prestartDelayMs))
     }
 
-    /** Stops immediately and cancels every pending step. */
     fun stop() {
         if (!running) return
         running = false
@@ -60,53 +64,60 @@ class AutomationRunner(
         StopMode.CYCLES -> cycles >= config.stopCycles
     }
 
-    private fun gestureDuration(type: ActionType, holdMs: Long, swipeMs: Long): Long = when (type) {
+    private fun gestureDuration(a: TargetAction): Long = when (a.type) {
         ActionType.TAP -> 50L
-        ActionType.HOLD -> max(1L, holdMs)
-        ActionType.SWIPE -> max(1L, swipeMs)
+        ActionType.HOLD -> max(1L, a.holdMs)
+        ActionType.SWIPE -> max(1L, a.swipeMs)
     }
 
-    /** Last index that belongs to the simultaneous group starting at [start]. */
-    private fun groupEndIndex(start: Int): Int {
-        var i = start
-        while (i < config.actions.size - 1 && config.actions[i].simultaneousWithNext) {
-            i++
-        }
-        return i
-    }
-
-    private fun runAction(index: Int) {
-        if (!running) return
-        if (index >= config.actions.size) {
-            cycles++
-            if (shouldStop()) {
-                stop()
-                return
+    /** Builds the strokes for one cycle and returns them with the cycle length. */
+    private fun compileCycle(): Pair<List<AutoClickService.TimedStroke>, Long> {
+        val strokes = mutableListOf<AutoClickService.TimedStroke>()
+        var cycleLen = 0L
+        val multi = config.mode == Mode.MULTI
+        for (lane in config.lanes) {
+            var cursor = 0L
+            for (a in lane.actions) {
+                val before = if (multi) max(0L, a.delayBeforeMs) else 0L
+                val start = cursor + before
+                val dur = gestureDuration(a)
+                strokes.add(
+                    AutoClickService.TimedStroke(
+                        a.x, a.y, a.endX, a.endY, a.type == ActionType.SWIPE, start, dur
+                    )
+                )
+                val after = if (multi) max(0L, a.delayAfterMs) else 0L
+                cursor = start + dur + after
+                if (start + dur > cycleLen) cycleLen = start + dur
             }
-            val betweenCycles = if (config.mode == Mode.MULTI) max(0L, config.intervalMs) else 0L
-            handler.postDelayed({ runAction(0) }, betweenCycles)
+        }
+        return strokes to cycleLen
+    }
+
+    private fun runCycle() {
+        if (!running) return
+        val (strokes, cycleLen) = compileCycle()
+        if (strokes.isEmpty()) {
+            scheduleNext(0L)
             return
         }
-        val endIndex = groupEndIndex(index)
-        val group = config.actions.subList(index, endIndex + 1).toList()
-        val first = group.first()
-        val last = group.last()
-        val before = if (config.mode == Mode.MULTI) max(0L, first.delayBeforeMs) else 0L
-        handler.postDelayed({
-            if (!running) return@postDelayed
-            val durations = group.map { gestureDuration(it.type, it.holdMs, it.swipeMs) }
-            val groupDuration = durations.maxOrNull() ?: 50L
-            service.dispatchGroup(group, durations) {
-                if (!running) return@dispatchGroup
-                val after = if (config.mode == Mode.SINGLE) {
-                    // Wait the remaining interval; if the hold was longer than
-                    // the interval this is 0 and we continue right away.
-                    max(0L, config.intervalMs - groupDuration)
-                } else {
-                    max(0L, last.delayAfterMs)
-                }
-                handler.postDelayed({ runAction(endIndex + 1) }, after)
+        service.dispatchTimeline(strokes, cycleLen) {
+            if (!running) return@dispatchTimeline
+            val betweenCycles = if (config.mode == Mode.SINGLE) {
+                max(0L, config.intervalMs - cycleLen)
+            } else {
+                max(0L, config.intervalMs)
             }
-        }, before)
+            scheduleNext(betweenCycles)
+        }
+    }
+
+    private fun scheduleNext(delayMs: Long) {
+        cycles++
+        if (shouldStop()) {
+            stop()
+            return
+        }
+        handler.postDelayed({ runCycle() }, delayMs)
     }
 }

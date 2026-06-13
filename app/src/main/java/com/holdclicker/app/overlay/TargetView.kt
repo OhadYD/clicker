@@ -25,6 +25,10 @@ class TargetView(context: Context) : View(context) {
     var linked: Boolean = false
         set(value) { field = value; invalidate() }
 
+    /** Base colour of this target (used to distinguish lanes/branches). */
+    var baseColor: Int = 0xFF03DAC5.toInt()
+        set(value) { field = value; invalidate() }
+
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -47,7 +51,8 @@ class TargetView(context: Context) : View(context) {
         val w = width.toFloat()
         val h = height.toFloat()
         val r = (min(w, h) / 2f) - 4f
-        fillPaint.color = if (isEndPoint) 0x99FF4081.toInt() else 0x9903DAC5.toInt()
+        val alpha = if (isEndPoint) 0x66 else 0x99
+        fillPaint.color = (baseColor and 0x00FFFFFF) or (alpha shl 24)
         canvas.drawCircle(w / 2f, h / 2f, r, fillPaint)
         canvas.drawCircle(w / 2f, h / 2f, r, strokePaint)
 

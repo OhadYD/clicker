@@ -22,7 +22,21 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="4dp"
+            android:text="Each branch runs in parallel. e.g. hold on one branch while another taps a sequence."
+            android:textColor="@color/textDim"
+            android:textSize="13sp" />
+
+        <com.holdclicker.app.overlay.LaneTreeView
+            android:id="@+id/treeView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:text="Delay between cycles (ms)"
             android:textColor="@color/textMain"
             android:textSize="15sp" />
@@ -127,25 +141,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="Actions (run in order)"
+            android:text="Parallel branches"
             android:textColor="?attr/accentMain"
             android:textSize="17sp"
             android:textStyle="bold" />
 
         <LinearLayout
-            android:id="@+id/container"
+            android:id="@+id/lanesContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="vertical" />
 
         <Button
-            android:id="@+id/btnAddAction"
+            android:id="@+id/btnAddLane"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:backgroundTint="@color/card"
-            android:text="＋ Add action"
+            android:text="＋ Add parallel branch"
             android:textColor="?attr/accentMain" />
 
         <Button

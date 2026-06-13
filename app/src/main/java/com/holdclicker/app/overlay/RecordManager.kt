@@ -202,40 +202,41 @@ class RecordManager(private val service: AutoClickService) {
         if (done.isEmpty()) return null
         val sorted = done.sortedBy { it.downAt }
 
-        // Cluster temporally overlapping touches into simultaneous groups.
-        val groups = mutableListOf<MutableList<Touch>>()
+        // Allocate each touch to a lane so that touches overlapping in time
+        // land in different lanes (independent parallel branches). A hold and
+        // the taps happening during it end up on separate lanes.
+        data class LaneBuild(val actions: MutableList<TargetAction>, var endAt: Long, var lastEnd: Long)
+        val laneBuilds = mutableListOf<LaneBuild>()
+
         for (t in sorted) {
-            val g = groups.lastOrNull()
-            val groupEnd = g?.maxOfOrNull { it.upAt }
-            if (g != null && groupEnd != null && t.downAt < groupEnd) {
-                g.add(t)
-            } else {
-                groups.add(mutableListOf(t))
+            // Reuse the first lane that is free at this touch's start time.
+            var lb = laneBuilds.firstOrNull { it.endAt <= t.downAt }
+            if (lb == null) {
+                lb = LaneBuild(mutableListOf(), 0L, 0L)
+                laneBuilds.add(lb)
             }
+            val action = toAction(t)
+            action.delayBeforeMs = if (lb.actions.isEmpty()) 0L else (t.downAt - lb.lastEnd).coerceAtLeast(0L)
+            action.delayAfterMs = 0L
+            lb.actions.add(action)
+            lb.endAt = t.upAt
+            lb.lastEnd = t.upAt
         }
 
-        val actions = mutableListOf<TargetAction>()
-        var prevGroupEnd = 0L
-        groups.forEachIndexed { gi, group ->
-            val ordered = group.sortedBy { it.downAt }
-            val groupStart = ordered.first().downAt
-            val delayBefore = if (gi == 0) 0L else (groupStart - prevGroupEnd).coerceAtLeast(0L)
-            ordered.forEachIndexed { ti, t ->
-                val action = toAction(t)
-                action.delayBeforeMs = if (ti == 0) delayBefore else 0L
-                action.delayAfterMs = 0L
-                action.simultaneousWithNext = ti < ordered.size - 1
-                actions.add(action)
-            }
-            prevGroupEnd = group.maxOf { it.upAt }
-        }
+        val lanes = laneBuilds
+            .filter { it.actions.isNotEmpty() }
+            .map { com.holdclicker.app.model.Lane(it.actions) }
+            .toMutableList()
+        if (lanes.isEmpty()) return null
 
         return ClickerConfig(
             name = RECORDED_NAME,
             mode = Mode.MULTI,
             intervalMs = 0L,
             stopMode = StopMode.INFINITE,
-            actions = actions
+            stopTimeMs = 60_000L,
+            stopCycles = 100L,
+            lanes = lanes
         )
     }
 

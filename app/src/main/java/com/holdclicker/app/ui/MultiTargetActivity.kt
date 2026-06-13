@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -15,23 +16,25 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import com.holdclicker.app.R
 import com.holdclicker.app.data.ConfigStore
 import com.holdclicker.app.model.ActionType
 import com.holdclicker.app.model.ClickerConfig
+import com.holdclicker.app.model.Lane
 import com.holdclicker.app.model.Mode
 import com.holdclicker.app.model.StopMode
 import com.holdclicker.app.model.TargetAction
+import com.holdclicker.app.overlay.LaneTreeView
 import com.holdclicker.app.service.AutoClickService
 import java.util.Collections
 
 class MultiTargetActivity : ThemedActivity() {
 
-    private val actions = mutableListOf<TargetAction>()
-    private val holders = mutableListOf<RowHolder>()
+    private val lanes = mutableListOf<Lane>()
+    private val laneHolders = mutableListOf<LaneHolder>()
 
-    private lateinit var container: LinearLayout
+    private lateinit var lanesContainer: LinearLayout
+    private lateinit var treeView: LaneTreeView
     private lateinit var etInterval: EditText
     private lateinit var etStopTime: EditText
     private lateinit var etStopCycles: EditText
@@ -41,7 +44,7 @@ class MultiTargetActivity : ThemedActivity() {
     private lateinit var timeRow: LinearLayout
     private lateinit var cyclesRow: LinearLayout
 
-    private inner class RowHolder(val view: View) {
+    private inner class RowHolder(val view: View, val action: TargetAction) {
         val title: TextView = view.findViewById(R.id.rowTitle)
         val btnUp: TextView = view.findViewById(R.id.btnUp)
         val btnDown: TextView = view.findViewById(R.id.btnDown)
@@ -53,15 +56,22 @@ class MultiTargetActivity : ThemedActivity() {
         val etSwipe: EditText = view.findViewById(R.id.etSwipe)
         val etBefore: EditText = view.findViewById(R.id.etBefore)
         val etAfter: EditText = view.findViewById(R.id.etAfter)
-        val swTogether: com.google.android.material.switchmaterial.SwitchMaterial =
-            view.findViewById(R.id.swTogether)
+    }
+
+    private inner class LaneHolder(val view: View, val lane: Lane) {
+        val title: TextView = view.findViewById(R.id.laneTitle)
+        val btnDelLane: TextView = view.findViewById(R.id.btnDelLane)
+        val actionsContainer: LinearLayout = view.findViewById(R.id.actionsContainer)
+        val btnAddAction: Button = view.findViewById(R.id.btnAddAction)
+        val rows = mutableListOf<RowHolder>()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_multi_target)
 
-        container = findViewById(R.id.container)
+        lanesContainer = findViewById(R.id.lanesContainer)
+        treeView = findViewById(R.id.treeView)
         etInterval = findViewById(R.id.etInterval)
         etStopTime = findViewById(R.id.etStopTime)
         etStopCycles = findViewById(R.id.etStopCycles)
@@ -75,9 +85,9 @@ class MultiTargetActivity : ThemedActivity() {
         rbTime.setOnCheckedChangeListener { _, _ -> updateStopVisibility() }
         rbCycles.setOnCheckedChangeListener { _, _ -> updateStopVisibility() }
 
-        findViewById<Button>(R.id.btnAddAction).setOnClickListener {
+        findViewById<Button>(R.id.btnAddLane).setOnClickListener {
             syncFromViews()
-            actions.add(defaultAction())
+            lanes.add(Lane(mutableListOf(defaultAction())))
             render()
         }
         findViewById<Button>(R.id.btnLaunch).setOnClickListener {
@@ -91,9 +101,8 @@ class MultiTargetActivity : ThemedActivity() {
         if (loadedName != null) {
             ConfigStore.load(this, loadedName)?.let { applyConfig(it) }
         }
-        if (actions.isEmpty()) {
-            actions.add(defaultAction())
-            actions.add(defaultAction())
+        if (lanes.isEmpty()) {
+            lanes.add(Lane(mutableListOf(defaultAction(), defaultAction())))
         }
 
         updateStopVisibility()
@@ -109,8 +118,9 @@ class MultiTargetActivity : ThemedActivity() {
         }
         etStopTime.setText((cfg.stopTimeMs / 1000L).toString())
         etStopCycles.setText(cfg.stopCycles.toString())
-        actions.clear()
-        actions.addAll(cfg.actions.map { it.copyOf() })
+        lanes.clear()
+        cfg.lanes.forEach { lanes.add(it.copyOf()) }
+        if (lanes.isEmpty()) lanes.add(Lane(mutableListOf(defaultAction())))
     }
 
     private fun updateStopVisibility() {
@@ -120,70 +130,99 @@ class MultiTargetActivity : ThemedActivity() {
 
     private fun defaultAction(): TargetAction {
         val dm = resources.displayMetrics
-        val i = actions.size
+        val n = lanes.sumOf { it.actions.size }
         return TargetAction(
-            x = dm.widthPixels * 0.3f + i * dm.widthPixels * 0.08f,
-            y = dm.heightPixels * 0.4f + i * dm.heightPixels * 0.06f,
+            x = dm.widthPixels * 0.3f + (n % 4) * dm.widthPixels * 0.08f,
+            y = dm.heightPixels * 0.35f + (n % 5) * dm.heightPixels * 0.06f,
             endX = dm.widthPixels * 0.7f,
-            endY = dm.heightPixels * 0.6f
+            endY = dm.heightPixels * 0.55f
         )
     }
 
     private fun render() {
-        container.removeAllViews()
-        holders.clear()
+        lanesContainer.removeAllViews()
+        laneHolders.clear()
         val inflater = LayoutInflater.from(this)
-        actions.forEachIndexed { index, a ->
-            val row = inflater.inflate(R.layout.row_action, container, false)
-            val h = RowHolder(row)
-            h.title.text = "Target ${index + 1}"
 
-            h.spType.adapter = ArrayAdapter(
-                this, android.R.layout.simple_spinner_dropdown_item,
-                listOf("Tap", "Hold", "Swipe")
-            )
-            h.spType.setSelection(a.type.ordinal)
-            h.spType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
-                    applyTypeVisibility(h, ActionType.values()[pos])
-                }
-                override fun onNothingSelected(p: AdapterView<*>?) {}
-            }
-
-            h.etHold.setText(a.holdMs.toString())
-            h.etSwipe.setText(a.swipeMs.toString())
-            h.etBefore.setText(a.delayBeforeMs.toString())
-            h.etAfter.setText(a.delayAfterMs.toString())
-            applyTypeVisibility(h, a.type)
-
-            val isLast = index == actions.size - 1
-            h.swTogether.isChecked = a.simultaneousWithNext && !isLast
-            h.swTogether.isEnabled = !isLast
-            h.swTogether.alpha = if (isLast) 0.4f else 1f
-
-            h.btnUp.setOnClickListener {
-                if (index > 0) {
-                    syncFromViews()
-                    Collections.swap(actions, index, index - 1)
-                    render()
-                }
-            }
-            h.btnDown.setOnClickListener {
-                if (index < actions.size - 1) {
-                    syncFromViews()
-                    Collections.swap(actions, index, index + 1)
-                    render()
-                }
-            }
-            h.btnDel.setOnClickListener {
+        lanes.forEachIndexed { laneIndex, lane ->
+            val laneView = inflater.inflate(R.layout.row_lane, lanesContainer, false)
+            val lh = LaneHolder(laneView, lane)
+            lh.title.text = "Branch ${('A' + laneIndex)}"
+            lh.btnDelLane.visibility = if (lanes.size > 1) View.VISIBLE else View.GONE
+            lh.btnDelLane.setOnClickListener {
                 syncFromViews()
-                actions.removeAt(index)
+                lanes.removeAt(laneIndex)
+                render()
+            }
+            lh.btnAddAction.setOnClickListener {
+                syncFromViews()
+                lane.actions.add(defaultAction())
                 render()
             }
 
-            holders.add(h)
-            container.addView(row)
+            lane.actions.forEachIndexed { ai, action ->
+                val row = buildRow(inflater, lh.actionsContainer, lane, action, laneIndex, ai)
+                lh.rows.add(row)
+                lh.actionsContainer.addView(row.view)
+            }
+
+            laneHolders.add(lh)
+            lanesContainer.addView(laneView)
         }
+        refreshTree()
+    }
+
+    private fun buildRow(
+        inflater: LayoutInflater,
+        parent: ViewGroup,
+        lane: Lane,
+        action: TargetAction,
+        laneIndex: Int,
+        actionIndex: Int
+    ): RowHolder {
+        val view = inflater.inflate(R.layout.row_action, parent, false)
+        val h = RowHolder(view, action)
+        h.title.text = "Target ${actionIndex + 1}"
+
+        h.spType.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_dropdown_item,
+            listOf("Tap", "Hold", "Swipe")
+        )
+        h.spType.setSelection(action.type.ordinal)
+        h.spType.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
+                applyTypeVisibility(h, ActionType.values()[pos])
+                refreshTree()
+            }
+            override fun onNothingSelected(p: AdapterView<*>?) {}
+        }
+
+        h.etHold.setText(action.holdMs.toString())
+        h.etSwipe.setText(action.swipeMs.toString())
+        h.etBefore.setText(action.delayBeforeMs.toString())
+        h.etAfter.setText(action.delayAfterMs.toString())
+        applyTypeVisibility(h, action.type)
+
+        h.btnUp.setOnClickListener {
+            if (actionIndex > 0) {
+                syncFromViews()
+                Collections.swap(lane.actions, actionIndex, actionIndex - 1)
+                render()
+            }
+        }
+        h.btnDown.setOnClickListener {
+            if (actionIndex < lane.actions.size - 1) {
+                syncFromViews()
+                Collections.swap(lane.actions, actionIndex, actionIndex + 1)
+                render()
+            }
+        }
+        h.btnDel.setOnClickListener {
+            syncFromViews()
+            lane.actions.removeAt(actionIndex)
+            render()
+        }
+        return h
     }
 
     private fun applyTypeVisibility(h: RowHolder, type: ActionType) {
@@ -191,18 +230,27 @@ class MultiTargetActivity : ThemedActivity() {
         h.swipeRow.visibility = if (type == ActionType.SWIPE) View.VISIBLE else View.GONE
     }
 
-    /** Copies the values currently typed in each row back into [actions]. */
+    /** Copies typed values back into the lane actions. */
     private fun syncFromViews() {
-        holders.forEachIndexed { i, h ->
-            if (i >= actions.size) return@forEachIndexed
-            val a = actions[i]
-            a.type = ActionType.values()[h.spType.selectedItemPosition]
-            a.holdMs = (h.etHold.text.toString().toLongOrNull() ?: 800L).coerceAtLeast(1L)
-            a.swipeMs = (h.etSwipe.text.toString().toLongOrNull() ?: 300L).coerceAtLeast(1L)
-            a.delayBeforeMs = (h.etBefore.text.toString().toLongOrNull() ?: 0L).coerceAtLeast(0L)
-            a.delayAfterMs = (h.etAfter.text.toString().toLongOrNull() ?: 200L).coerceAtLeast(0L)
-            a.simultaneousWithNext = h.swTogether.isChecked && i < actions.size - 1
+        laneHolders.forEach { lh ->
+            lh.rows.forEach { h ->
+                val a = h.action
+                a.type = ActionType.values()[h.spType.selectedItemPosition]
+                a.holdMs = (h.etHold.text.toString().toLongOrNull() ?: 800L).coerceAtLeast(1L)
+                a.swipeMs = (h.etSwipe.text.toString().toLongOrNull() ?: 300L).coerceAtLeast(1L)
+                a.delayBeforeMs = (h.etBefore.text.toString().toLongOrNull() ?: 0L).coerceAtLeast(0L)
+                a.delayAfterMs = (h.etAfter.text.toString().toLongOrNull() ?: 200L).coerceAtLeast(0L)
+            }
         }
+    }
+
+    private fun refreshTree() {
+        syncFromViews()
+        treeView.config = ClickerConfig(
+            name = "preview",
+            mode = Mode.MULTI,
+            lanes = lanes.map { it.copyOf() }.toMutableList()
+        )
     }
 
     private fun buildConfig(): ClickerConfig? {
@@ -227,6 +275,20 @@ class MultiTargetActivity : ThemedActivity() {
             Toast.makeText(this, "Cycle count must be greater than 0", Toast.LENGTH_SHORT).show()
             return null
         }
+
+        val totalActions = lanes.sumOf { it.actions.size }
+        if (totalActions > 10) {
+            Toast.makeText(
+                this,
+                "A cycle can run at most 10 actions across all branches at once. " +
+                    "Reduce actions or split into more cycles.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+
+        val copied = lanes.map { it.copyOf() }.filter { it.actions.isNotEmpty() }.toMutableList()
+        if (copied.isEmpty()) copied.add(Lane())
+
         return ClickerConfig(
             name = "Unsaved multi",
             mode = Mode.MULTI,
@@ -234,7 +296,7 @@ class MultiTargetActivity : ThemedActivity() {
             stopMode = stopMode,
             stopTimeMs = stopTimeSec * 1000L,
             stopCycles = stopCycles,
-            actions = actions.map { it.copyOf() }.toMutableList()
+            lanes = copied
         )
     }
 

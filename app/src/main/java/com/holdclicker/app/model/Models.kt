@@ -60,6 +60,25 @@ class TargetAction(
     }
 }
 
+/** An independent parallel branch: an ordered list of actions on its own timeline. */
+class Lane(
+    var actions: MutableList<TargetAction> = mutableListOf()
+) {
+    fun copyOf() = Lane(actions.map { it.copyOf() }.toMutableList())
+
+    fun toJson(): JSONArray = JSONArray().apply { actions.forEach { put(it.toJson()) } }
+
+    companion object {
+        fun fromJson(arr: JSONArray): Lane {
+            val lane = Lane()
+            for (i in 0 until arr.length()) {
+                lane.actions.add(TargetAction.fromJson(arr.getJSONObject(i)))
+            }
+            return lane
+        }
+    }
+}
+
 class ClickerConfig(
     var name: String = "Unnamed",
     var mode: Mode = Mode.SINGLE,
@@ -68,11 +87,31 @@ class ClickerConfig(
     var stopMode: StopMode = StopMode.INFINITE,
     var stopTimeMs: Long = 60_000L,
     var stopCycles: Long = 100L,
-    var actions: MutableList<TargetAction> = mutableListOf()
+    /** One or more parallel branches. Every lane runs concurrently each cycle. */
+    var lanes: MutableList<Lane> = mutableListOf(Lane())
 ) {
+    /** Backward-compatible view of the first lane's actions (used by single mode). */
+    val actions: MutableList<TargetAction>
+        get() {
+            if (lanes.isEmpty()) lanes.add(Lane())
+            return lanes[0].actions
+        }
+
+    /** Convenience constructor for single-lane configs. */
+    constructor(
+        name: String,
+        mode: Mode,
+        intervalMs: Long = 300L,
+        stopMode: StopMode = StopMode.INFINITE,
+        stopTimeMs: Long = 60_000L,
+        stopCycles: Long = 100L,
+        actions: MutableList<TargetAction>
+    ) : this(name, mode, intervalMs, stopMode, stopTimeMs, stopCycles,
+        mutableListOf(Lane(actions)))
+
     fun deepCopy() = ClickerConfig(
         name, mode, intervalMs, stopMode, stopTimeMs, stopCycles,
-        actions.map { it.copyOf() }.toMutableList()
+        lanes.map { it.copyOf() }.toMutableList()
     )
 
     fun toJson(): JSONObject = JSONObject().apply {
@@ -82,7 +121,7 @@ class ClickerConfig(
         put("stopMode", stopMode.name)
         put("stopTimeMs", stopTimeMs)
         put("stopCycles", stopCycles)
-        put("actions", JSONArray().apply { actions.forEach { put(it.toJson()) } })
+        put("lanes", JSONArray().apply { lanes.forEach { put(it.toJson()) } })
     }
 
     companion object {
@@ -95,14 +134,26 @@ class ClickerConfig(
                 stopMode = runCatching { StopMode.valueOf(o.optString("stopMode", "INFINITE")) }
                     .getOrDefault(StopMode.INFINITE),
                 stopTimeMs = o.optLong("stopTimeMs", 60_000L),
-                stopCycles = o.optLong("stopCycles", 100L)
+                stopCycles = o.optLong("stopCycles", 100L),
+                lanes = mutableListOf()
             )
-            val arr = o.optJSONArray("actions")
-            if (arr != null) {
-                for (i in 0 until arr.length()) {
-                    cfg.actions.add(TargetAction.fromJson(arr.getJSONObject(i)))
+            val lanesArr = o.optJSONArray("lanes")
+            if (lanesArr != null) {
+                for (i in 0 until lanesArr.length()) {
+                    cfg.lanes.add(Lane.fromJson(lanesArr.getJSONArray(i)))
                 }
+            } else {
+                // Legacy single-list format.
+                val arr = o.optJSONArray("actions")
+                val lane = Lane()
+                if (arr != null) {
+                    for (i in 0 until arr.length()) {
+                        lane.actions.add(TargetAction.fromJson(arr.getJSONObject(i)))
+                    }
+                }
+                cfg.lanes.add(lane)
             }
+            if (cfg.lanes.isEmpty()) cfg.lanes.add(Lane())
             return cfg
         }
     }
