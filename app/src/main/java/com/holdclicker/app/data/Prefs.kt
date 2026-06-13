@@ -28,4 +28,31 @@ object Prefs {
     fun setCountdownEnabled(ctx: Context, value: Boolean) {
         p(ctx).edit().putBoolean("countdown", value).apply()
     }
+
+    // ---- Appearance ------------------------------------------------------
+
+    /** 0 = Aqua, 1 = Ocean, 2 = Grape, 3 = Ember. */
+    fun accentIndex(ctx: Context): Int = p(ctx).getInt("accent", 0)
+    fun setAccentIndex(ctx: Context, value: Int) {
+        p(ctx).edit().putInt("accent", value.coerceIn(0, 3)).apply()
+    }
+
+    fun accentThemeRes(ctx: Context): Int = when (accentIndex(ctx)) {
+        1 -> com.holdclicker.app.R.style.Theme_HoldClicker_Ocean
+        2 -> com.holdclicker.app.R.style.Theme_HoldClicker_Grape
+        3 -> com.holdclicker.app.R.style.Theme_HoldClicker_Ember
+        else -> com.holdclicker.app.R.style.Theme_HoldClicker_Aqua
+    }
+
+    /** 0 = follow system, 1 = light, 2 = dark. */
+    fun nightModeIndex(ctx: Context): Int = p(ctx).getInt("nightMode", 0)
+    fun setNightModeIndex(ctx: Context, value: Int) {
+        p(ctx).edit().putInt("nightMode", value.coerceIn(0, 2)).apply()
+    }
+
+    fun nightModeDelegate(ctx: Context): Int = when (nightModeIndex(ctx)) {
+        1 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+        2 -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+        else -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+    }
 }

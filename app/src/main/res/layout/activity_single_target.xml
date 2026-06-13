@@ -15,7 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Single Target Mode"
-            android:textColor="@color/teal"
+            android:textColor="?attr/accentMain"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -184,7 +184,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:textColor="@color/pink"
+            android:textColor="?attr/accentSecondary"
             android:textSize="13sp"
             android:visibility="gone" />
 
@@ -193,7 +193,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:backgroundTint="@color/teal"
+            android:backgroundTint="?attr/accentMain"
             android:text="Show overlay"
             android:textColor="@color/bg" />
 

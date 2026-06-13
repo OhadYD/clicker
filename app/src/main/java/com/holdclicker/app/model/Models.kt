@@ -22,9 +22,13 @@ class TargetAction(
     var delayAfterMs: Long = 200L,
     var endX: Float = 650f,
     var endY: Float = 1050f,
-    var swipeMs: Long = 300L
+    var swipeMs: Long = 300L,
+    /** When true, this action fires at the same time as the next one in the list. */
+    var simultaneousWithNext: Boolean = false
 ) {
-    fun copyOf() = TargetAction(x, y, type, holdMs, delayBeforeMs, delayAfterMs, endX, endY, swipeMs)
+    fun copyOf() = TargetAction(
+        x, y, type, holdMs, delayBeforeMs, delayAfterMs, endX, endY, swipeMs, simultaneousWithNext
+    )
 
     fun toJson(): JSONObject = JSONObject().apply {
         put("x", x.toDouble())
@@ -36,6 +40,7 @@ class TargetAction(
         put("endX", endX.toDouble())
         put("endY", endY.toDouble())
         put("swipeMs", swipeMs)
+        put("simultaneousWithNext", simultaneousWithNext)
     }
 
     companion object {
@@ -49,7 +54,8 @@ class TargetAction(
             delayAfterMs = o.optLong("delayAfterMs", 200L),
             endX = o.optDouble("endX", 650.0).toFloat(),
             endY = o.optDouble("endY", 1050.0).toFloat(),
-            swipeMs = o.optLong("swipeMs", 300L)
+            swipeMs = o.optLong("swipeMs", 300L),
+            simultaneousWithNext = o.optBoolean("simultaneousWithNext", false)
         )
     }
 }

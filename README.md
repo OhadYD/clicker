@@ -3,11 +3,12 @@
 HoldClicker is an open, user-controlled auto tapper for Android. Every target can be a normal **Tap**, a **Hold** press for a configurable number of milliseconds, or (in multi target mode) a **Swipe**. It uses Android's Accessibility gesture API and a floating overlay control bar, with no hidden behavior: automation only runs while you press Start, a persistent notification is shown the whole time, and Stop halts it immediately.
 
 - **Single Target Mode** — one draggable target, repeated tap or hold at a chosen interval.
-- **Multi Target Mode** — an ordered sequence of taps, holds and swipes with per-action delays.
+- **Multi Target Mode** — an ordered sequence of taps, holds and swipes with per-action delays, including **simultaneous (multi-touch) actions** such as two holds at once.
+- **Record Actions** — count down, then capture the taps, holds, swipes and multi-touch you perform into an editable sequence.
 - **Configurations** — save, load, duplicate, rename and delete setups locally.
-- **Common Settings** — target size, control bar size, vibration and countdown toggles.
+- **Common Settings** — target size, control bar size, vibration, countdown, **light/dark mode and accent themes**.
 
-Dark theme with teal/pink accents. Original branding and assets.
+Light or dark with four accent palettes (Aqua, Ocean, Grape, Ember). Original branding and assets.
 
 ---
 
@@ -79,11 +80,35 @@ The app's home screen shows whether the service is enabled and has a shortcut bu
 - **Multi mode:** set an action's type dropdown to **Hold** and fill in **Hold (ms)**.
 - Hold targets show a small **H** marker on the overlay circle.
 
-## 8. Managing configurations
+## 7a. Simultaneous (multi-touch) actions — e.g. two holds at once
+
+Some actions only happen when two spots are pressed at the same time. In **Multi Target Mode**, every action row has a **⛓ Run together with next action** switch. Turn it on to fire that action at the same instant as the one below it. Chain several in a row to press three or more points together (Android allows up to ten simultaneous strokes).
+
+- Example: to hold two buttons at once, add two **Hold** actions, place their circles on the two spots, and switch **⛓ Run together with next action** on for the first one.
+- On the overlay, targets that fire together show a small **⛓** chain mark.
+- The group runs for as long as its longest member (so two holds of different lengths both stay down until the longer one finishes), then the sequence continues.
+
+## 7b. Recording a sequence
+
+The **⏺ Record Actions** card captures exactly what you do:
+
+1. Tap **⏺ Record Actions** on the home screen (the accessibility service must be enabled).
+2. A **3-second countdown** appears, then a translucent capture layer covers the screen.
+3. Perform your taps, holds and swipes — **including two or more fingers at once**. Each press is captured with its real position and timing; quick presses become taps, longer ones become holds, dragged ones become swipes, and presses that overlap in time become a simultaneous group.
+4. Tap **■ Stop** on the small bar at the top.
+5. HoldClicker builds the sequence, saves it as **"Recorded sequence"**, and opens it in Multi Target Mode so you can fine-tune and save it under your own name.
+
+**Important about how recording works:** Android does not let an app silently watch your touches inside other apps (that capability is what malware abuses, and it's blocked without root). So recording happens *on the capture layer* — while you record, your touches land on that layer rather than the app underneath. You're laying out the sequence and its timing on screen, then HoldClicker plays it back into the real app afterward. Positions and timing are captured faithfully, which is what playback needs.
+
+## 8. Themes and light mode
+
+Open **Common Settings → Appearance** to choose **System**, **Light**, or **Dark**. Under **Accent theme** pick **Aqua** (teal/pink), **Ocean** (blue/cyan), **Grape** (purple/magenta) or **Ember** (orange/red). Appearance changes apply immediately; the floating overlay keeps a fixed dark, high-contrast look so its controls stay readable over any app.
+
+## 9. Managing configurations
 
 Open **Manage Configurations** to Load, Rename, Duplicate or Delete saved setups. Four examples are pre-seeded: `Config 0`, `Config 1`, `Hold test` and `Multi target test`. Save new ones from the Single/Multi screens with **Save as configuration**. Configs are stored locally in the app's private storage (SharedPreferences as JSON).
 
-## 9. Safety notes
+## 10. Safety notes
 
 - Intervals below **40 ms** trigger a warning — extremely fast tapping can overload apps and your device.
 - Negative durations are rejected by input validation.
@@ -109,7 +134,8 @@ HoldClicker/
 │           ├── data/Prefs.kt            # common settings
 │           ├── service/AutoClickService.kt   # AccessibilityService + gesture dispatch
 │           ├── service/AutomationRunner.kt   # sequential scheduling engine
-│           ├── overlay/                 # control bar, target circles, swipe lines
-│           └── ui/                      # home, single, multi, configs, settings screens
+│           ├── overlay/                 # control bar, targets, swipe lines, recorder
+│           ├── App.kt                   # applies saved light/dark mode
+│           └── ui/                      # home, single, multi, configs, settings, themed base
 └── README.md
 ```

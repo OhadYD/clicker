@@ -15,7 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Common Settings"
-            android:textColor="@color/teal"
+            android:textColor="?attr/accentMain"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -73,8 +73,88 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
-            android:text="Theme: Dark (more themes coming later)"
-            android:textColor="@color/textDim"
-            android:textSize="14sp" />
+            android:text="Appearance"
+            android:textColor="?attr/accentMain"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/rgAppearance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rbSystem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="System"
+                android:textColor="@color/textMain" />
+
+            <RadioButton
+                android:id="@+id/rbLight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Light"
+                android:textColor="@color/textMain" />
+
+            <RadioButton
+                android:id="@+id/rbDark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Dark"
+                android:textColor="@color/textMain" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Accent theme"
+            android:textColor="?attr/accentMain"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/rgAccent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/rbAqua"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="Aqua (teal / pink)"
+                android:textColor="@color/textMain" />
+
+            <RadioButton
+                android:id="@+id/rbOcean"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ocean (blue / cyan)"
+                android:textColor="@color/textMain" />
+
+            <RadioButton
+                android:id="@+id/rbGrape"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Grape (purple / magenta)"
+                android:textColor="@color/textMain" />
+
+            <RadioButton
+                android:id="@+id/rbEmber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ember (orange / red)"
+                android:textColor="@color/textMain" />
+        </RadioGroup>
+
     </LinearLayout>
 </ScrollView>

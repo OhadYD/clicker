@@ -192,6 +192,7 @@ class OverlayManager(private val service: AutoClickService) {
     }
 
     private fun addTargetWindow(a: TargetAction, index: Int, sizePx: Int, isEnd: Boolean) {
+        val cfg = config
         val v = TargetView(service)
         v.label = (index + 1).toString()
         v.isEndPoint = isEnd
@@ -199,6 +200,10 @@ class OverlayManager(private val service: AutoClickService) {
             isEnd -> "›"
             a.type == ActionType.HOLD -> "H"
             else -> null
+        }
+        if (!isEnd && cfg != null) {
+            val prevLinks = index > 0 && cfg.actions[index - 1].simultaneousWithNext
+            v.linked = a.simultaneousWithNext || prevLinks
         }
         val lp = WindowManager.LayoutParams(
             sizePx, sizePx, overlayType(), currentTargetFlags(), PixelFormat.TRANSLUCENT

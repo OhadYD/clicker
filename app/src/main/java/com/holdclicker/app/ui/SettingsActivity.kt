@@ -9,7 +9,7 @@ import com.holdclicker.app.R
 import com.holdclicker.app.data.Prefs
 import com.holdclicker.app.service.AutoClickService
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : ThemedActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +60,50 @@ class SettingsActivity : AppCompatActivity() {
         switchCountdown.isChecked = Prefs.countdownEnabled(this)
         switchCountdown.setOnCheckedChangeListener { _, checked ->
             Prefs.setCountdownEnabled(this, checked)
+        }
+
+        bindAppearance()
+        bindAccent()
+    }
+
+    private fun bindAppearance() {
+        val rg = findViewById<android.widget.RadioGroup>(R.id.rgAppearance)
+        when (Prefs.nightModeIndex(this)) {
+            1 -> rg.check(R.id.rbLight)
+            2 -> rg.check(R.id.rbDark)
+            else -> rg.check(R.id.rbSystem)
+        }
+        rg.setOnCheckedChangeListener { _, id ->
+            val index = when (id) {
+                R.id.rbLight -> 1
+                R.id.rbDark -> 2
+                else -> 0
+            }
+            Prefs.setNightModeIndex(this, index)
+            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                Prefs.nightModeDelegate(this)
+            )
+            AutoClickService.instance?.overlay?.rebuildTargets()
+        }
+    }
+
+    private fun bindAccent() {
+        val rg = findViewById<android.widget.RadioGroup>(R.id.rgAccent)
+        when (Prefs.accentIndex(this)) {
+            1 -> rg.check(R.id.rbOcean)
+            2 -> rg.check(R.id.rbGrape)
+            3 -> rg.check(R.id.rbEmber)
+            else -> rg.check(R.id.rbAqua)
+        }
+        rg.setOnCheckedChangeListener { _, id ->
+            val index = when (id) {
+                R.id.rbOcean -> 1
+                R.id.rbGrape -> 2
+                R.id.rbEmber -> 3
+                else -> 0
+            }
+            Prefs.setAccentIndex(this, index)
+            recreate()
         }
     }
 }

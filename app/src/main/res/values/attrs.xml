@@ -1,0 +1,4 @@
+<resources>
+    <attr name="accentMain" format="color" />
+    <attr name="accentSecondary" format="color" />
+</resources>

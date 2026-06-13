@@ -1,14 +1,37 @@
 <resources>
-    <style name="Theme.HoldClicker" parent="Theme.MaterialComponents.NoActionBar">
-        <item name="colorPrimary">@color/teal</item>
+    <!-- Base theme: DayNight so light/dark follow the chosen mode. Default accent = Aqua. -->
+    <style name="Theme.HoldClicker" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="accentMain">@color/teal</item>
+        <item name="accentSecondary">@color/pink</item>
+
+        <item name="colorPrimary">?attr/accentMain</item>
         <item name="colorPrimaryVariant">@color/tealDark</item>
-        <item name="colorOnPrimary">#06241F</item>
-        <item name="colorSecondary">@color/pink</item>
-        <item name="colorSecondaryVariant">@color/pink</item>
+        <item name="colorOnPrimary">@color/bg</item>
+        <item name="colorSecondary">?attr/accentSecondary</item>
+        <item name="colorSecondaryVariant">?attr/accentSecondary</item>
+
         <item name="android:colorBackground">@color/bg</item>
         <item name="android:windowBackground">@color/bg</item>
         <item name="android:statusBarColor">@color/bg</item>
         <item name="android:navigationBarColor">@color/bg</item>
         <item name="android:textColor">@color/textMain</item>
+    </style>
+
+    <!-- Accent variants. Each only swaps the two accent colors. -->
+    <style name="Theme.HoldClicker.Aqua" parent="Theme.HoldClicker" />
+
+    <style name="Theme.HoldClicker.Ocean" parent="Theme.HoldClicker">
+        <item name="accentMain">@color/ocean</item>
+        <item name="accentSecondary">@color/oceanSec</item>
+    </style>
+
+    <style name="Theme.HoldClicker.Grape" parent="Theme.HoldClicker">
+        <item name="accentMain">@color/grape</item>
+        <item name="accentSecondary">@color/grapeSec</item>
+    </style>
+
+    <style name="Theme.HoldClicker.Ember" parent="Theme.HoldClicker">
+        <item name="accentMain">@color/ember</item>
+        <item name="accentSecondary">@color/emberSec</item>
     </style>
 </resources>

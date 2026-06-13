@@ -15,7 +15,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Multi Target Mode"
-            android:textColor="@color/teal"
+            android:textColor="?attr/accentMain"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -128,7 +128,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:text="Actions (run in order)"
-            android:textColor="@color/teal"
+            android:textColor="?attr/accentMain"
             android:textSize="17sp"
             android:textStyle="bold" />
 
@@ -146,14 +146,14 @@
             android:layout_marginTop="8dp"
             android:backgroundTint="@color/card"
             android:text="＋ Add action"
-            android:textColor="@color/teal" />
+            android:textColor="?attr/accentMain" />
 
         <Button
             android:id="@+id/btnLaunch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:backgroundTint="@color/teal"
+            android:backgroundTint="?attr/accentMain"
             android:text="Show overlay"
             android:textColor="@color/bg" />
 

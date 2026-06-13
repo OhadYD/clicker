@@ -22,6 +22,7 @@ import com.holdclicker.app.model.ActionType
 import com.holdclicker.app.model.ClickerConfig
 import com.holdclicker.app.model.TargetAction
 import com.holdclicker.app.overlay.OverlayManager
+import com.holdclicker.app.overlay.RecordManager
 import com.holdclicker.app.ui.MainActivity
 
 /**
@@ -44,6 +45,7 @@ class AutoClickService : AccessibilityService() {
     var overlay: OverlayManager? = null
         private set
     private var runner: AutomationRunner? = null
+    private var recorder: RecordManager? = null
     var currentConfig: ClickerConfig? = null
         private set
 
@@ -64,6 +66,7 @@ class AutoClickService : AccessibilityService() {
 
     override fun onDestroy() {
         stopAutomation()
+        recorder?.stop()
         overlay?.hide()
         overlay = null
         instance = null
@@ -81,6 +84,22 @@ class AutoClickService : AccessibilityService() {
     fun hideOverlay() {
         stopAutomation()
         overlay?.hide()
+    }
+
+    /** Starts the record flow: countdown, then capture gestures. */
+    fun startRecording() {
+        if (isRunning) return
+        hideOverlay()
+        if (recorder == null) recorder = RecordManager(this)
+        recorder?.start()
+    }
+
+    fun stopRecording() {
+        recorder?.stop()
+    }
+
+    fun onRecordingFinished() {
+        recorder = null
     }
 
     fun startAutomation() {
@@ -110,6 +129,52 @@ class AutoClickService : AccessibilityService() {
         cancelNotification()
         vibrateIfEnabled()
         overlay?.setRunning(false)
+    }
+
+    /**
+     * Dispatches several actions at the same time as one multi-stroke
+     * gesture (e.g. two holds at once). [onDone] fires when the whole
+     * gesture finishes. Android allows up to GestureDescription
+     * .getMaxStrokeCount() simultaneous strokes; extras are ignored.
+     */
+    fun dispatchGroup(actions: List<TargetAction>, durations: List<Long>, onDone: () -> Unit) {
+        if (actions.size <= 1) {
+            val a = actions.firstOrNull()
+            if (a == null) { onDone(); return }
+            dispatchAction(a, durations.firstOrNull() ?: 50L, onDone)
+            return
+        }
+        val maxStrokes = try {
+            GestureDescription.getMaxStrokeCount()
+        } catch (_: Throwable) {
+            10
+        }
+        val builder = GestureDescription.Builder()
+        var longest = 1L
+        val count = minOf(actions.size, maxStrokes)
+        for (i in 0 until count) {
+            val a = actions[i]
+            val path = Path()
+            path.moveTo(a.x.coerceAtLeast(1f), a.y.coerceAtLeast(1f))
+            if (a.type == ActionType.SWIPE) {
+                path.lineTo(a.endX.coerceAtLeast(1f), a.endY.coerceAtLeast(1f))
+            }
+            val duration = durations[i].coerceIn(1L, 59_000L)
+            if (duration > longest) longest = duration
+            builder.addStroke(GestureDescription.StrokeDescription(path, 0L, duration))
+        }
+        val gesture = builder.build()
+        val dispatched = try {
+            dispatchGesture(gesture, object : GestureResultCallback() {
+                override fun onCompleted(g: GestureDescription?) = onDone()
+                override fun onCancelled(g: GestureDescription?) = onDone()
+            }, handler)
+        } catch (e: Exception) {
+            false
+        }
+        if (!dispatched) {
+            handler.postDelayed(onDone, longest + 50L)
+        }
     }
 
     /**

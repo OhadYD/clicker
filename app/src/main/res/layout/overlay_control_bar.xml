@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:text="⠿"
-        android:textColor="@color/textDim"
+        android:textColor="#9AA3B2"
         android:textSize="18sp" />
 
     <TextView
@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:text="●"
-        android:textColor="@color/teal"
+        android:textColor="#03DAC5"
         android:textSize="18sp" />
 
     <TextView
@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:text="▶"
-        android:textColor="@color/teal"
+        android:textColor="#03DAC5"
         android:textSize="18sp" />
 
     <TextView
@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:text="⏹"
-        android:textColor="@color/pink"
+        android:textColor="#FF4081"
         android:textSize="18sp" />
 
     <TextView
@@ -51,7 +51,7 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:text="＋"
-        android:textColor="@color/textMain"
+        android:textColor="#ECEFF4"
         android:textSize="18sp" />
 
     <TextView
@@ -60,7 +60,7 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:text="－"
-        android:textColor="@color/textMain"
+        android:textColor="#ECEFF4"
         android:textSize="18sp" />
 
     <TextView
@@ -69,7 +69,7 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:text="⚙"
-        android:textColor="@color/textMain"
+        android:textColor="#ECEFF4"
         android:textSize="18sp" />
 
     <TextView
@@ -78,6 +78,6 @@
         android:layout_height="wrap_content"
         android:padding="8dp"
         android:text="✕"
-        android:textColor="@color/textDim"
+        android:textColor="#9AA3B2"
         android:textSize="18sp" />
 </LinearLayout>

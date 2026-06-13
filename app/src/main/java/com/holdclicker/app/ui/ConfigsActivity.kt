@@ -14,7 +14,7 @@ import com.holdclicker.app.R
 import com.holdclicker.app.data.ConfigStore
 import com.holdclicker.app.model.Mode
 
-class ConfigsActivity : AppCompatActivity() {
+class ConfigsActivity : ThemedActivity() {
 
     private lateinit var container: LinearLayout
 

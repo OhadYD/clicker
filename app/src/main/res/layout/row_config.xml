@@ -24,7 +24,7 @@
         android:minWidth="0dp"
         android:padding="8dp"
         android:text="Load"
-        android:textColor="@color/teal"
+        android:textColor="?attr/accentMain"
         android:textSize="14sp"
         android:textStyle="bold" />
 
@@ -55,6 +55,6 @@
         android:minWidth="0dp"
         android:padding="8dp"
         android:text="Del"
-        android:textColor="@color/pink"
+        android:textColor="?attr/accentSecondary"
         android:textSize="14sp" />
 </LinearLayout>

@@ -15,7 +15,7 @@ import com.holdclicker.app.R
 import com.holdclicker.app.data.ConfigStore
 import com.holdclicker.app.service.AutoClickService
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ThemedActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +28,9 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<android.view.View>(R.id.cardMulti).setOnClickListener {
             startActivity(Intent(this, MultiTargetActivity::class.java))
+        }
+        findViewById<android.view.View>(R.id.cardRecord).setOnClickListener {
+            startRecording()
         }
         findViewById<android.view.View>(R.id.cardConfigs).setOnClickListener {
             startActivity(Intent(this, ConfigsActivity::class.java))
@@ -57,6 +60,32 @@ class MainActivity : AppCompatActivity() {
             status.setTextColor(ContextCompat.getColor(this, R.color.pink))
             button.visibility = android.view.View.VISIBLE
         }
+    }
+
+    private fun startRecording() {
+        val svc = AutoClickService.instance
+        if (svc == null) {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Accessibility service required")
+                .setMessage(
+                    "Recording uses the HoldClicker accessibility service to show a capture " +
+                        "layer and play the result back. Enable it first, then try again."
+                )
+                .setPositiveButton("Open settings") { _, _ ->
+                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+            return
+        }
+        svc.startRecording()
+        android.widget.Toast.makeText(
+            this, "Recording starts after a 3-second countdown", android.widget.Toast.LENGTH_LONG
+        ).show()
+        startActivity(Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        })
     }
 
     private fun requestNotificationPermissionIfNeeded() {

@@ -26,7 +26,7 @@ import com.holdclicker.app.model.TargetAction
 import com.holdclicker.app.service.AutoClickService
 import java.util.Collections
 
-class MultiTargetActivity : AppCompatActivity() {
+class MultiTargetActivity : ThemedActivity() {
 
     private val actions = mutableListOf<TargetAction>()
     private val holders = mutableListOf<RowHolder>()
@@ -53,6 +53,8 @@ class MultiTargetActivity : AppCompatActivity() {
         val etSwipe: EditText = view.findViewById(R.id.etSwipe)
         val etBefore: EditText = view.findViewById(R.id.etBefore)
         val etAfter: EditText = view.findViewById(R.id.etAfter)
+        val swTogether: com.google.android.material.switchmaterial.SwitchMaterial =
+            view.findViewById(R.id.swTogether)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -154,6 +156,11 @@ class MultiTargetActivity : AppCompatActivity() {
             h.etAfter.setText(a.delayAfterMs.toString())
             applyTypeVisibility(h, a.type)
 
+            val isLast = index == actions.size - 1
+            h.swTogether.isChecked = a.simultaneousWithNext && !isLast
+            h.swTogether.isEnabled = !isLast
+            h.swTogether.alpha = if (isLast) 0.4f else 1f
+
             h.btnUp.setOnClickListener {
                 if (index > 0) {
                     syncFromViews()
@@ -194,6 +201,7 @@ class MultiTargetActivity : AppCompatActivity() {
             a.swipeMs = (h.etSwipe.text.toString().toLongOrNull() ?: 300L).coerceAtLeast(1L)
             a.delayBeforeMs = (h.etBefore.text.toString().toLongOrNull() ?: 0L).coerceAtLeast(0L)
             a.delayAfterMs = (h.etAfter.text.toString().toLongOrNull() ?: 200L).coerceAtLeast(0L)
+            a.simultaneousWithNext = h.swTogether.isChecked && i < actions.size - 1
         }
     }
 

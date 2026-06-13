@@ -66,6 +66,15 @@ class AutomationRunner(
         ActionType.SWIPE -> max(1L, swipeMs)
     }
 
+    /** Last index that belongs to the simultaneous group starting at [start]. */
+    private fun groupEndIndex(start: Int): Int {
+        var i = start
+        while (i < config.actions.size - 1 && config.actions[i].simultaneousWithNext) {
+            i++
+        }
+        return i
+    }
+
     private fun runAction(index: Int) {
         if (!running) return
         if (index >= config.actions.size) {
@@ -78,21 +87,25 @@ class AutomationRunner(
             handler.postDelayed({ runAction(0) }, betweenCycles)
             return
         }
-        val a = config.actions[index]
-        val before = if (config.mode == Mode.MULTI) max(0L, a.delayBeforeMs) else 0L
+        val endIndex = groupEndIndex(index)
+        val group = config.actions.subList(index, endIndex + 1).toList()
+        val first = group.first()
+        val last = group.last()
+        val before = if (config.mode == Mode.MULTI) max(0L, first.delayBeforeMs) else 0L
         handler.postDelayed({
             if (!running) return@postDelayed
-            val dur = gestureDuration(a.type, a.holdMs, a.swipeMs)
-            service.dispatchAction(a, dur) {
-                if (!running) return@dispatchAction
+            val durations = group.map { gestureDuration(it.type, it.holdMs, it.swipeMs) }
+            val groupDuration = durations.maxOrNull() ?: 50L
+            service.dispatchGroup(group, durations) {
+                if (!running) return@dispatchGroup
                 val after = if (config.mode == Mode.SINGLE) {
                     // Wait the remaining interval; if the hold was longer than
                     // the interval this is 0 and we continue right away.
-                    max(0L, config.intervalMs - dur)
+                    max(0L, config.intervalMs - groupDuration)
                 } else {
-                    max(0L, a.delayAfterMs)
+                    max(0L, last.delayAfterMs)
                 }
-                handler.postDelayed({ runAction(index + 1) }, after)
+                handler.postDelayed({ runAction(endIndex + 1) }, after)
             }
         }, before)
     }

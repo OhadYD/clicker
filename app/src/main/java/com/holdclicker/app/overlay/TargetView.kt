@@ -22,6 +22,9 @@ class TargetView(context: Context) : View(context) {
     var marker: String? = null
         set(value) { field = value; invalidate() }
 
+    var linked: Boolean = false
+        set(value) { field = value; invalidate() }
+
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -55,6 +58,11 @@ class TargetView(context: Context) : View(context) {
         marker?.let {
             markerPaint.textSize = h * 0.24f
             canvas.drawText(it, w * 0.78f, h * 0.30f, markerPaint)
+        }
+
+        if (linked) {
+            markerPaint.textSize = h * 0.22f
+            canvas.drawText("⛓", w / 2f, h * 0.94f, markerPaint)
         }
     }
 }

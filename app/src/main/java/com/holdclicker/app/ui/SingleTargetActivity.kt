@@ -23,7 +23,7 @@ import com.holdclicker.app.model.StopMode
 import com.holdclicker.app.model.TargetAction
 import com.holdclicker.app.service.AutoClickService
 
-class SingleTargetActivity : AppCompatActivity() {
+class SingleTargetActivity : ThemedActivity() {
 
     private lateinit var etInterval: EditText
     private lateinit var etHold: EditText
