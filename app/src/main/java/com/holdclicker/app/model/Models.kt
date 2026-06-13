@@ -23,11 +23,14 @@ class TargetAction(
     var endX: Float = 650f,
     var endY: Float = 1050f,
     var swipeMs: Long = 300L,
+    /** When true, a HOLD action keeps pressing until the user presses Stop. */
+    var holdIndefinite: Boolean = false,
     /** When true, this action fires at the same time as the next one in the list. */
     var simultaneousWithNext: Boolean = false
 ) {
     fun copyOf() = TargetAction(
-        x, y, type, holdMs, delayBeforeMs, delayAfterMs, endX, endY, swipeMs, simultaneousWithNext
+        x, y, type, holdMs, delayBeforeMs, delayAfterMs, endX, endY, swipeMs, holdIndefinite,
+        simultaneousWithNext
     )
 
     fun toJson(): JSONObject = JSONObject().apply {
@@ -40,6 +43,7 @@ class TargetAction(
         put("endX", endX.toDouble())
         put("endY", endY.toDouble())
         put("swipeMs", swipeMs)
+        put("holdIndefinite", holdIndefinite)
         put("simultaneousWithNext", simultaneousWithNext)
     }
 
@@ -55,6 +59,7 @@ class TargetAction(
             endX = o.optDouble("endX", 650.0).toFloat(),
             endY = o.optDouble("endY", 1050.0).toFloat(),
             swipeMs = o.optLong("swipeMs", 300L),
+            holdIndefinite = o.optBoolean("holdIndefinite", false),
             simultaneousWithNext = o.optBoolean("simultaneousWithNext", false)
         )
     }

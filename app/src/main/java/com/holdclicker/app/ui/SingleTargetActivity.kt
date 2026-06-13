@@ -7,6 +7,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
@@ -30,6 +31,7 @@ class SingleTargetActivity : ThemedActivity() {
     private lateinit var etHold: EditText
     private lateinit var etStopTime: EditText
     private lateinit var etStopCycles: EditText
+    private lateinit var cbPermanentHold: CheckBox
     private lateinit var rbTap: RadioButton
     private lateinit var rbHold: RadioButton
     private lateinit var rbInfinite: RadioButton
@@ -51,6 +53,7 @@ class SingleTargetActivity : ThemedActivity() {
         etHold = findViewById(R.id.etHold)
         etStopTime = findViewById(R.id.etStopTime)
         etStopCycles = findViewById(R.id.etStopCycles)
+        cbPermanentHold = findViewById(R.id.cbPermanentHold)
         rbTap = findViewById(R.id.rbTap)
         rbHold = findViewById(R.id.rbHold)
         rbInfinite = findViewById(R.id.rbInfinite)
@@ -66,6 +69,7 @@ class SingleTargetActivity : ThemedActivity() {
         rbInfinite.setOnCheckedChangeListener { _, _ -> updateVisibility() }
         rbTime.setOnCheckedChangeListener { _, _ -> updateVisibility() }
         rbCycles.setOnCheckedChangeListener { _, _ -> updateVisibility() }
+        cbPermanentHold.setOnCheckedChangeListener { _, _ -> updateVisibility(); updateWarning() }
 
         val watcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
@@ -97,6 +101,7 @@ class SingleTargetActivity : ThemedActivity() {
             loadedAction = action.copyOf()
             if (action.type == ActionType.HOLD) rbHold.isChecked = true else rbTap.isChecked = true
             etHold.setText(action.holdMs.toString())
+            cbPermanentHold.isChecked = action.holdIndefinite
         }
         when (cfg.stopMode) {
             StopMode.INFINITE -> rbInfinite.isChecked = true
@@ -109,6 +114,8 @@ class SingleTargetActivity : ThemedActivity() {
 
     private fun updateVisibility() {
         holdRow.visibility = if (rbHold.isChecked) View.VISIBLE else View.GONE
+        etHold.isEnabled = !(rbHold.isChecked && cbPermanentHold.isChecked)
+        etHold.alpha = if (etHold.isEnabled) 1f else 0.45f
         timeRow.visibility = if (rbTime.isChecked) View.VISIBLE else View.GONE
         cyclesRow.visibility = if (rbCycles.isChecked) View.VISIBLE else View.GONE
     }
@@ -120,7 +127,9 @@ class SingleTargetActivity : ThemedActivity() {
         if (interval != null && interval < 40) {
             messages.add("⚠ Intervals below 40 ms can overload apps and your device.")
         }
-        if (rbHold.isChecked && interval != null && hold != null && hold > interval) {
+        if (rbHold.isChecked && cbPermanentHold.isChecked) {
+            messages.add("ℹ Permanent hold stays pressed until Stop. Android refreshes it in long safe chunks.")
+        } else if (rbHold.isChecked && interval != null && hold != null && hold > interval) {
             messages.add("ℹ Hold is longer than the interval — the runner waits for each hold to finish before the next one.")
         }
         if (messages.isEmpty()) {
@@ -139,8 +148,9 @@ class SingleTargetActivity : ThemedActivity() {
             return null
         }
         val type = if (rbHold.isChecked) ActionType.HOLD else ActionType.TAP
+        val permanentHold = type == ActionType.HOLD && cbPermanentHold.isChecked
         val hold = etHold.text.toString().toLongOrNull() ?: 800L
-        if (type == ActionType.HOLD && hold < 1) {
+        if (type == ActionType.HOLD && !permanentHold && hold < 1) {
             Toast.makeText(this, "Hold duration must be at least 1 ms", Toast.LENGTH_SHORT).show()
             return null
         }
@@ -166,7 +176,8 @@ class SingleTargetActivity : ThemedActivity() {
             y = dm.heightPixels / 2f
         )).also {
             it.type = type
-            it.holdMs = hold
+            it.holdMs = hold.coerceAtLeast(1L)
+            it.holdIndefinite = permanentHold
         }
 
         return ClickerConfig(

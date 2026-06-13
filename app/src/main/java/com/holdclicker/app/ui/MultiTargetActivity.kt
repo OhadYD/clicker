@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
@@ -52,6 +53,7 @@ class MultiTargetActivity : ThemedActivity() {
         val spType: Spinner = view.findViewById(R.id.spType)
         val holdRow: View = view.findViewById(R.id.holdRow)
         val etHold: EditText = view.findViewById(R.id.etHold)
+        val cbPermanentHold: CheckBox = view.findViewById(R.id.cbPermanentHold)
         val swipeRow: View = view.findViewById(R.id.swipeRow)
         val etSwipe: EditText = view.findViewById(R.id.etSwipe)
         val etBefore: EditText = view.findViewById(R.id.etBefore)
@@ -198,6 +200,8 @@ class MultiTargetActivity : ThemedActivity() {
         }
 
         h.etHold.setText(action.holdMs.toString())
+        h.cbPermanentHold.isChecked = action.holdIndefinite
+        h.cbPermanentHold.setOnCheckedChangeListener { _, _ -> applyTypeVisibility(h, ActionType.values()[h.spType.selectedItemPosition]); refreshTree() }
         h.etSwipe.setText(action.swipeMs.toString())
         h.etBefore.setText(action.delayBeforeMs.toString())
         h.etAfter.setText(action.delayAfterMs.toString())
@@ -227,6 +231,8 @@ class MultiTargetActivity : ThemedActivity() {
 
     private fun applyTypeVisibility(h: RowHolder, type: ActionType) {
         h.holdRow.visibility = if (type == ActionType.HOLD) View.VISIBLE else View.GONE
+        h.etHold.isEnabled = !(type == ActionType.HOLD && h.cbPermanentHold.isChecked)
+        h.etHold.alpha = if (h.etHold.isEnabled) 1f else 0.45f
         h.swipeRow.visibility = if (type == ActionType.SWIPE) View.VISIBLE else View.GONE
     }
 
@@ -237,6 +243,7 @@ class MultiTargetActivity : ThemedActivity() {
                 val a = h.action
                 a.type = ActionType.values()[h.spType.selectedItemPosition]
                 a.holdMs = (h.etHold.text.toString().toLongOrNull() ?: 800L).coerceAtLeast(1L)
+                a.holdIndefinite = h.cbPermanentHold.isChecked
                 a.swipeMs = (h.etSwipe.text.toString().toLongOrNull() ?: 300L).coerceAtLeast(1L)
                 a.delayBeforeMs = (h.etBefore.text.toString().toLongOrNull() ?: 0L).coerceAtLeast(0L)
                 a.delayAfterMs = (h.etAfter.text.toString().toLongOrNull() ?: 200L).coerceAtLeast(0L)

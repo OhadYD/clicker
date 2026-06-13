@@ -152,7 +152,7 @@ class LaneTreeView @JvmOverloads constructor(
 
     private fun nodeLabel(n: Int, a: TargetAction): String = when (a.type) {
         ActionType.TAP -> "$n  Tap"
-        ActionType.HOLD -> "$n  Hold ${a.holdMs}ms"
+        ActionType.HOLD -> if (a.holdIndefinite) "$n  Hold ∞" else "$n  Hold ${a.holdMs}ms"
         ActionType.SWIPE -> "$n  Swipe ${a.swipeMs}ms"
     }
 

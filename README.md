@@ -54,7 +54,7 @@ The app's home screen shows whether the service is enabled and has a shortcut bu
 
 1. Open **Single Target Mode** from the home screen.
 2. Set the **click interval** in milliseconds (e.g. 300).
-3. Choose the action type: **Tap** or **Hold**. For Hold, set the **hold duration** in ms.
+3. Choose the action type: **Tap** or **Hold**. For Hold, set the **hold duration** in ms, or enable **Permanent hold until Stop**.
 4. Pick a stop condition: run indefinitely, stop after a number of seconds, or stop after a number of cycles.
 5. Tap **Show overlay**. The app goes to the home screen and a floating control bar plus one numbered target circle appear.
 6. Drag the circle onto the spot you want pressed, open the app you want to automate, then tap **▶** on the bar.
@@ -66,7 +66,7 @@ The app's home screen shows whether the service is enabled and has a shortcut bu
 2. Set the **delay between cycles** and a stop condition.
 3. Edit the action list. Each action has:
    - **Type**: Tap, Hold or Swipe (dropdown)
-   - **Hold (ms)** for Hold actions
+   - **Hold (ms)** for Hold actions, plus **Permanent** for a hold that stays pressed until Stop
    - **Swipe (ms)** for Swipe actions
    - **Delay before / after** the action in ms
    - Use **↑ / ↓** to reorder and **✕** to delete; **＋ Add action** appends one.
@@ -77,8 +77,9 @@ The app's home screen shows whether the service is enabled and has a shortcut bu
 ## 7. Adding Hold actions
 
 - **Single mode:** choose **Hold** as the action type and enter the duration, e.g. interval 300 ms with hold 800 ms. Since the hold is longer than the interval, the runner simply waits for each hold to finish before starting the next one (the screen tells you this).
-- **Multi mode:** set an action's type dropdown to **Hold** and fill in **Hold (ms)**.
-- Hold targets show a small **H** marker on the overlay circle.
+- **Multi mode:** set an action's type dropdown to **Hold** and fill in **Hold (ms)**, or tick **Permanent**.
+- Hold targets show a small **H** marker on the overlay circle. Permanent holds show **∞**.
+- Android caps one accessibility gesture at about 60 seconds, so permanent holds are refreshed automatically in long safe chunks until you press **Stop**.
 
 ## 7a. Parallel branches (independent simultaneous action paths)
 
@@ -91,7 +92,7 @@ Multi Target Mode is built around **branches** that run **in parallel**. Each br
 
 **How it runs and its limits.** On stock Android (no root), the only reliable way to press two places at the same time is to send them as one gesture with multiple strokes at different start times — Android cancels a gesture if a second one is dispatched mid-way, so independent OS-level "threads" aren't possible. HoldClicker therefore compiles every branch into a single timed gesture per cycle. Consequences to know:
 
-- A cycle can contain **at most ~10 actions total across all branches** (Android's stroke limit) and must fit within **60 seconds**.
+- A cycle can contain **at most ~10 actions total across all branches** (Android's stroke limit) and must fit within **60 seconds**. Strokes are now sorted by their start time before dispatch, so a later branch can no longer break A2/A3 actions in the main branch.
 - A branch that should stay **continuously** held while another branch taps many times will briefly re-press at each cycle boundary, because each cycle is one gesture. Keep the hold to roughly one cycle's length and set the cycle delay to 0 for the smoothest result.
 
 ## 7b. Recording a sequence

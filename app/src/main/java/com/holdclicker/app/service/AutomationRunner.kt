@@ -66,7 +66,7 @@ class AutomationRunner(
 
     private fun gestureDuration(a: TargetAction): Long = when (a.type) {
         ActionType.TAP -> 50L
-        ActionType.HOLD -> max(1L, a.holdMs)
+        ActionType.HOLD -> if (a.holdIndefinite) AutoClickService.MAX_GESTURE_MS else max(1L, a.holdMs)
         ActionType.SWIPE -> max(1L, a.swipeMs)
     }
 

@@ -229,6 +229,7 @@ class OverlayManager(private val service: AutoClickService) {
         v.baseColor = color
         v.marker = when {
             isEnd -> "›"
+            a.type == ActionType.HOLD && a.holdIndefinite -> "∞"
             a.type == ActionType.HOLD -> "H"
             else -> null
         }

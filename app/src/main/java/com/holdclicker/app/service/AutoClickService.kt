@@ -38,6 +38,8 @@ class AutoClickService : AccessibilityService() {
         var instance: AutoClickService? = null
         const val NOTIF_ID = 1
         const val CHANNEL_ID = "running"
+        /** Android accessibility gestures are capped at 60s; keep a small safety margin. */
+        const val MAX_GESTURE_MS = 59_000L
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -105,7 +107,7 @@ class AutoClickService : AccessibilityService() {
     fun startAutomation() {
         val cfg = currentConfig ?: return
         if (isRunning) return
-        if (cfg.actions.isEmpty()) {
+        if (cfg.lanes.all { it.actions.isEmpty() }) {
             Toast.makeText(this, "Add at least one target first (＋ button)", Toast.LENGTH_SHORT).show()
             return
         }
@@ -161,14 +163,17 @@ class AutoClickService : AccessibilityService() {
         }
         val builder = GestureDescription.Builder()
         var added = 0
-        for (s in strokes) {
+        val orderedStrokes = strokes.sortedWith(
+            compareBy<TimedStroke> { it.startMs }.thenByDescending { it.durationMs }
+        )
+        for (s in orderedStrokes) {
             if (added >= maxStrokes) break
             val path = Path()
             path.moveTo(s.sx.coerceAtLeast(1f), s.sy.coerceAtLeast(1f))
             if (s.swipe) {
                 path.lineTo(s.ex.coerceAtLeast(1f), s.ey.coerceAtLeast(1f))
             }
-            val start = s.startMs.coerceIn(0L, 59_000L)
+            val start = s.startMs.coerceIn(0L, MAX_GESTURE_MS)
             val dur = s.durationMs.coerceIn(1L, 60_000L - start)
             builder.addStroke(GestureDescription.StrokeDescription(path, start, dur))
             added++

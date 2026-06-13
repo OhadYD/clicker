@@ -90,6 +90,13 @@
                 android:text="800"
                 android:textColor="@color/textMain"
                 android:textColorHint="@color/textDim" />
+
+            <CheckBox
+                android:id="@+id/cbPermanentHold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Permanent hold until Stop"
+                android:textColor="@color/textMain" />
         </LinearLayout>
 
         <TextView
