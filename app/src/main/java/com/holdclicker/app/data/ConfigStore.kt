@@ -70,7 +70,9 @@ object ConfigStore {
             mode = Mode.SINGLE,
             intervalMs = 300L,
             stopMode = StopMode.INFINITE,
-            actions = mutableListOf(TargetAction(x = 400f, y = 800f, type = ActionType.TAP))
+            lanes = mutableListOf(Lane(mutableListOf(
+                TargetAction(x = 400f, y = 800f, type = ActionType.TAP)
+            )))
         ))
 
         save(ctx, ClickerConfig(
@@ -79,7 +81,9 @@ object ConfigStore {
             intervalMs = 1000L,
             stopMode = StopMode.CYCLES,
             stopCycles = 100L,
-            actions = mutableListOf(TargetAction(x = 400f, y = 800f, type = ActionType.TAP))
+            lanes = mutableListOf(Lane(mutableListOf(
+                TargetAction(x = 400f, y = 800f, type = ActionType.TAP)
+            )))
         ))
 
         save(ctx, ClickerConfig(
@@ -87,9 +91,9 @@ object ConfigStore {
             mode = Mode.SINGLE,
             intervalMs = 300L,
             stopMode = StopMode.INFINITE,
-            actions = mutableListOf(
+            lanes = mutableListOf(Lane(mutableListOf(
                 TargetAction(x = 400f, y = 800f, type = ActionType.HOLD, holdMs = 800L)
-            )
+            )))
         ))
 
         save(ctx, ClickerConfig(
@@ -97,14 +101,14 @@ object ConfigStore {
             mode = Mode.MULTI,
             intervalMs = 500L,
             stopMode = StopMode.INFINITE,
-            actions = mutableListOf(
+            lanes = mutableListOf(Lane(mutableListOf(
                 TargetAction(x = 300f, y = 700f, type = ActionType.TAP, delayAfterMs = 200L),
                 TargetAction(x = 520f, y = 900f, type = ActionType.HOLD, holdMs = 800L, delayAfterMs = 200L),
                 TargetAction(
                     x = 300f, y = 1100f, type = ActionType.SWIPE,
                     endX = 700f, endY = 1100f, swipeMs = 400L, delayAfterMs = 200L
                 )
-            )
+            )))
         ))
 
         // Parallel branches demo: hold one spot while tapping another.

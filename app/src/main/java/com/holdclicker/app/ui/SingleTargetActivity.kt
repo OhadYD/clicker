@@ -18,6 +18,7 @@ import com.holdclicker.app.R
 import com.holdclicker.app.data.ConfigStore
 import com.holdclicker.app.model.ActionType
 import com.holdclicker.app.model.ClickerConfig
+import com.holdclicker.app.model.Lane
 import com.holdclicker.app.model.Mode
 import com.holdclicker.app.model.StopMode
 import com.holdclicker.app.model.TargetAction
@@ -175,7 +176,7 @@ class SingleTargetActivity : ThemedActivity() {
             stopMode = stopMode,
             stopTimeMs = stopTimeSec * 1000L,
             stopCycles = stopCycles,
-            actions = mutableListOf(action)
+            lanes = mutableListOf(Lane(mutableListOf(action)))
         )
     }
 

@@ -97,17 +97,6 @@ class ClickerConfig(
             return lanes[0].actions
         }
 
-    /** Convenience constructor for single-lane configs. */
-    constructor(
-        name: String,
-        mode: Mode,
-        intervalMs: Long = 300L,
-        stopMode: StopMode = StopMode.INFINITE,
-        stopTimeMs: Long = 60_000L,
-        stopCycles: Long = 100L,
-        actions: MutableList<TargetAction>
-    ) : this(name, mode, intervalMs, stopMode, stopTimeMs, stopCycles,
-        mutableListOf(Lane(actions)))
 
     fun deepCopy() = ClickerConfig(
         name, mode, intervalMs, stopMode, stopTimeMs, stopCycles,
